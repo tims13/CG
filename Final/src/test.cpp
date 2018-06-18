@@ -1,4 +1,4 @@
-﻿//#define GLEW_STATIC
+//#define GLEW_STATIC
 //#pragma comment(lib,"glew.lib")
 #include <GL\glew.h>
 #include <GLFW/glfw3.h>
@@ -22,6 +22,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window, int key, int scancode, int action, int mods);
 void autoUpdate();
+void cameraMove(GLFWwindow *window);
 
 unsigned int loadTexture(const char *path);
 
@@ -36,11 +37,11 @@ const unsigned int SCR_HEIGHT = 720;
 
 
 // car's position
-glm::vec3 car_position = glm::vec3(0.0f, 0.20f, 0.0f);
+glm::vec3 car_position = glm::vec3(-3.72f, 0.20f, 6.17f);
 glm::vec3 car_forward = glm::vec3(0.0f, 0.0f, -1.0f);
 float car_forward_speed = 0.0f;
 float cat_forward_acceleration = -0.01f;
-float car_rotation_ratio = 0.0f;
+float car_rotation_ratio = 273.1f;
 float car_rotation_acceleration = 0.0f;
 
 // camera
@@ -242,6 +243,12 @@ int main()
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+		// camearaMove
+		if (status == STATUS::NONE) {
+			cameraMove(window);
+			// std::cout << "car position : " << car_position.x << ' ' << car_position.y << ' ' << car_position.z << " rotation : " << car_rotation_ratio << std::endl;
+		}
+
 		// per-frame time logic
 		// --------------------
 		float currentFrame = glfwGetTime();
@@ -319,8 +326,8 @@ int main()
 
 		// Fountain
 		glm::mat4 model_fountain;
-		model_fountain = glm::translate(model_fountain, glm::vec3(4.5, 0.0, 5.0));
-		model_fountain = glm::scale(model_fountain, glm::vec3(0.05, 0.05, 0.05));
+		model_fountain = glm::translate(model_fountain, glm::vec3(2.48, 0.25, 3.36));
+		model_fountain = glm::scale(model_fountain, glm::vec3(0.035, 0.06, 0.035));
 		mFountain.Render(deltaTime, model_fountain, view, projection);
 
 
@@ -356,6 +363,17 @@ int main()
 	return 0;
 }
 
+void cameraMove(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
 void autoUpdate() {
 	car_forward_speed += cat_forward_acceleration*deltaTime;
 	car_forward_speed = car_forward_speed > 0.0f ? car_forward_speed : 0.0f;
@@ -377,7 +395,16 @@ void processInput(GLFWwindow *window, int key, int scancode, int action, int mod
 {
 	if (key == GLFW_KEY_ESCAPE)
 		glfwSetWindowShouldClose(window, true);
-
+	if (action == GLFW_PRESS && key == GLFW_KEY_SPACE) {
+		if (status == STATUS::NONE) {
+			status = STATUS::MOVE;
+			std::cout << "Switch status from NONE to MOVE" << std::endl;
+		}
+		else {
+			status = STATUS::NONE;
+			std::cout << "Switch status from MOVE to NONE" << std::endl;
+		}
+	}
 	if (status == STATUS::MOVE) {
 		if (action == GLFW_PRESS) {
 			if (key == GLFW_KEY_A)
@@ -387,11 +414,7 @@ void processInput(GLFWwindow *window, int key, int scancode, int action, int mod
 			if (key == GLFW_KEY_W)
 				cat_forward_acceleration = 0.2f;
 			if (key == GLFW_KEY_S)
-				cat_forward_acceleration = -0.4f;
-			if (key == GLFW_KEY_SPACE) {
-				status = STATUS::NONE;
-				std::cout << "Switch status from MOVE to NONE" << std::endl;
-			}
+				cat_forward_acceleration = -0.8f;
 		}
 
 		if (action == GLFW_RELEASE) {
@@ -399,20 +422,6 @@ void processInput(GLFWwindow *window, int key, int scancode, int action, int mod
 				car_rotation_acceleration = 0.0f;
 			if (key == GLFW_KEY_W || key == GLFW_KEY_S)
 				cat_forward_acceleration = -0.1f;
-		}
-	}
-	else {
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			camera.ProcessKeyboard(FORWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			camera.ProcessKeyboard(BACKWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			camera.ProcessKeyboard(LEFT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			camera.ProcessKeyboard(RIGHT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			status = STATUS::MOVE;
-			std::cout << "Switch status from NONE to MOVE" << std::endl;
 		}
 	}
 }
